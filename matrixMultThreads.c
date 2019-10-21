@@ -3,25 +3,15 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define THREADS_QTY 1
-#define N 2000
+#define THREADS_QTY 8                                // Define a quantidade de threads do programa.
+#define N 2000                                       // Define o tamanho da matriz.
 
-static int mat1[N][N] = {{1,2},{2,1}}, mat2[N][N] = {{1,2},{2,1}}, res[N][N], passo;
+static int mat1[N][N], mat2[N][N], res[N][N], passo; // Inicializa as matrizes como variáveis globais.
 
-
-void multiply(int mat1[][N], int mat2[][N], int res[][N]) { 
-    int i, j, k; 
-    for (i = 0; i < N; i++) 
-    { 
-        for (j = 0; j < N; j++) 
-        { 
-            res[i][j] = 0; 
-            for (k = 0; k < N; k++) 
-                res[i][j] += mat1[i][k]*mat2[k][j]; 
-        } 
-    } 
-} 
-  
+/*
+    função: cria N*N número aleatórios para preencher a matrix de entrada
+        input: int matrix[N][N] - matriz que receberá os valores gerados.
+*/
 void createMatrix(int matrix[N][N]) {
     int value;
 
@@ -33,7 +23,10 @@ void createMatrix(int matrix[N][N]) {
     }
 }
 
-void *multiplyThreads(void* args) {
+/*  função: divide a matriz em partes menores (baseado na quantidade de threads), 
+            multiplica as linhas e colunas e atribui o resultado à matriz res.
+*/
+void *multiplyMatrix() {
     int thread = passo++;
 
     for(int i = thread * N / THREADS_QTY; i < (thread+1) * N / THREADS_QTY; i++) {
@@ -47,29 +40,34 @@ void *multiplyThreads(void* args) {
 
 int main() { 
     srand(time(NULL));
-  
-    double tempoLevado;
-    pthread_t threads[N];
+    
+    double tempoLevado;         // Armazena o tempo que leva para executar os algoritmos
+    pthread_t threads[N];       // Armazena as threads criadas
 
-    clock_t t;
+    clock_t t;                  // Variável de tempo
 
+    // Atribui valores aleatórios às matrizes a serem multiplicadas.
     createMatrix(mat1);
     createMatrix(mat2);
 
+    // Atribui o valor do relógio no momento de início de execução do algoritmo
     t = clock();
 
+    // Cria as threads que executam a função multiplyMatrix
     for (int i = 0; i < THREADS_QTY; i++) {
         int* p;
-        pthread_create(&threads[i], NULL, multiplyThreads, (void *)p);
+        pthread_create(&threads[i], NULL, multiplyMatrix, NULL);
     }
 
+    // Espera todas as threads finalizarem
     for (int i = 0; i < THREADS_QTY; i++) {
         pthread_join(threads[i], NULL);
     }
 
+    // Mede o tempo levado pelo programa e imprime na tela.
     t = clock() - t;
     tempoLevado = (((double)t)/CLOCKS_PER_SEC)/THREADS_QTY;
-    printf("%f + ", tempoLevado);
+    printf("%f\n", tempoLevado);
 
     return 0; 
 } 
